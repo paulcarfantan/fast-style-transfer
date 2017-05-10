@@ -3,7 +3,7 @@
 import tensorflow as tf
 import numpy as np
 import scipy.io
-import pdb
+import pdb       #Python Debugger
 
 MEAN_PIXEL = np.array([ 123.68 ,  116.779,  103.939])
 
