@@ -97,3 +97,8 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+*mat
+Checkpoint
+Test
+Train
