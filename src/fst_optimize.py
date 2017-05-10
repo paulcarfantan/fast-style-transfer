@@ -1,11 +1,9 @@
 from __future__ import print_function
 import functools
-import fst_vgg
-import pdb
-import time
+import vgg, pdb, time
 import tensorflow as tf, numpy as np, os
-import fst_transform
-from fst_utils import get_img
+import transform
+from utils import get_img
 
 STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
 CONTENT_LAYER = 'relu4_2'
@@ -18,38 +16,23 @@ def optimize(content_targets, style_target, content_weight, style_weight,
              learning_rate=1e-3, debug=False):
     if slow:
         batch_size = 1
-    
-    print("content_targets",content_targets)     #liste des éléments du dossier --train-path
-    print("style_target.shape",style_target.shape)    
-    print("style_target",style_target)           #Array à 3 dimensions
-    
     mod = len(content_targets) % batch_size
-    print("mod", mod)
-    if mod > 0:                                                 #On veut un nb d'éléments multiple de 4
+    if mod > 0:
         print("Train set has been trimmed slightly..")
-        content_targets = content_targets[:-mod]
-        print("content_targets",content_targets)
-        print("\n")
-        
+        content_targets = content_targets[:-mod] 
+
     style_features = {}
 
     batch_shape = (batch_size,256,256,3)
     style_shape = (1,) + style_target.shape
-    print("style_shape",style_shape)
+    print(style_shape)
 
     # precompute style features
     with tf.Graph().as_default(), tf.device('/cpu:0'), tf.Session() as sess:
         style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
-        style_image_pre = fst_vgg.preprocess(style_image)                                # style_image - mean_pixel
-        print("style_image_pre",style_image_pre,"\n")
-        net = fst_vgg.net(vgg_path, style_image_pre)
-        print("net",net,"\n")
+        style_image_pre = vgg.preprocess(style_image)
+        net = vgg.net(vgg_path, style_image_pre)
         style_pre = np.array([style_target])
-        print("style_pre",style_pre,"\n")
-        if style_pre.all == style_target.all:
-            print("\n EGAUX \n")
-        else:
-            print("\n \n Dommage \n \n")
         for layer in STYLE_LAYERS:
             features = net[layer].eval(feed_dict={style_image:style_pre})
             features = np.reshape(features, (-1, features.shape[3]))
@@ -58,11 +41,11 @@ def optimize(content_targets, style_target, content_weight, style_weight,
 
     with tf.Graph().as_default(), tf.Session() as sess:
         X_content = tf.placeholder(tf.float32, shape=batch_shape, name="X_content")
-        X_pre = fst_vgg.preprocess(X_content)
+        X_pre = vgg.preprocess(X_content)
 
         # precompute content features
         content_features = {}
-        content_net = fst_vgg.net(vgg_path, X_pre)
+        content_net = vgg.net(vgg_path, X_pre)
         content_features[CONTENT_LAYER] = content_net[CONTENT_LAYER]
 
         if slow:
@@ -71,10 +54,10 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             )
             preds_pre = preds
         else:
-            preds = fst_transform.net(X_content/255.0)
-            preds_pre = fst_vgg.preprocess(preds)
+            preds = transform.net(X_content/255.0)
+            preds_pre = vgg.preprocess(preds)
 
-        net = fst_vgg.net(vgg_path, preds_pre)
+        net = vgg.net(vgg_path, preds_pre)
 
         content_size = _tensor_size(content_features[CONTENT_LAYER])*batch_size
         assert _tensor_size(content_features[CONTENT_LAYER]) == _tensor_size(net[CONTENT_LAYER])
@@ -148,7 +131,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                     _style_loss,_content_loss,_tv_loss,_loss,_preds = tup
                     losses = (_style_loss, _content_loss, _tv_loss, _loss)
                     if slow:
-                       _preds = fst_vgg.unprocess(_preds)
+                       _preds = vgg.unprocess(_preds)
                     else:
                        saver = tf.train.Saver()
                        res = saver.save(sess, save_path)

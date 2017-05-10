@@ -2,10 +2,10 @@ from __future__ import print_function
 import sys, os, pdb
 sys.path.insert(0, 'src')
 import numpy as np, scipy.misc 
-from fst_optimize import optimize
+from optimize import optimize
 from argparse import ArgumentParser
-from fst_utils import save_img, get_img, exists, list_files
-import fst_evaluate
+from utils import save_img, get_img, exists, list_files
+import evaluate
 
 CONTENT_WEIGHT = 7.5e0
 STYLE_WEIGHT = 1e2
@@ -143,13 +143,8 @@ def main():
         options.tv_weight,
         options.vgg_path
     ]
-    
-    k=0
-    for preds, _, _, _ in optimize(content_targets, style_target, options.content_weight, options.style_weight, options.tv_weight, options.vgg_path, options.epochs, options.checkpoint_iterations, options.batch_size, os.path.join(options.checkpoint_dir,'fns.ckpt'), options.slow, options.learning_rate):
-            print(k)
-            k=k+1
-    
-    for preds, losses, i, epoch in optimize(content_targets, style_target, options.content_weight, options.style_weight, options.tv_weight, options.vgg_path, options.epochs, options.checkpoint_iterations, options.batch_size, os.path.join(options.checkpoint_dir,'fns.ckpt'), options.slow, options.learning_rate):
+
+    for preds, losses, i, epoch in optimize(*args, **kwargs):
         style_loss, content_loss, tv_loss, loss = losses
 
         print('Epoch %d, Iteration: %d, Loss: %s' % (epoch, i, loss))
@@ -160,17 +155,13 @@ def main():
             preds_path = '%s/%s_%s.png' % (options.test_dir,epoch,i)
             if not options.slow:
                 ckpt_dir = os.path.dirname(options.checkpoint_dir)
-                fst_evaluate.ffwd_to_img(options.test,preds_path,
+                evaluate.ffwd_to_img(options.test,preds_path,
                                      options.checkpoint_dir)
             else:
                 save_img(preds_path, img)
-
-
-    print("\n","OK","\n")
-
     ckpt_dir = options.checkpoint_dir
     cmd_text = 'python evaluate.py --checkpoint %s ...' % ckpt_dir
     print("Training complete. For evaluation:\n    `%s`" % cmd_text)
-    
+
 if __name__ == '__main__':
     main()
