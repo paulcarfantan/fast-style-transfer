@@ -87,7 +87,7 @@ def build_parser():
 
     return parser
 
-def check_opts(opts):
+def check_opts(opts):                                           #Vérification des input (type & existence)
     exists(opts.checkpoint_dir, "checkpoint dir not found!")
     exists(opts.style, "style path not found!")
     exists(opts.train_path, "train path not found!")
@@ -144,7 +144,7 @@ def main():
         options.vgg_path
     ]
 
-    for preds, losses, i, epoch in optimize(*args, **kwargs):
+    for preds, losses, i, epoch in optimize(*args, **kwargs):         #met côte à côte les éléments de la liste args et du dico kwargs (dico => "slow=options.slow", etc)
         style_loss, content_loss, tv_loss, loss = losses
 
         print('Epoch %d, Iteration: %d, Loss: %s' % (epoch, i, loss))
