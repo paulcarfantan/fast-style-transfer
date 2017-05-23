@@ -2,24 +2,23 @@ from __future__ import print_function
 import sys
 sys.path.insert(0, 'src')
 import transform
-import vgg
-import pdb
+#import vgg
+#import pdb
 import os
-import scipy.misc
+#import scipy.misc
 import tensorflow as tf
 from fst_utils import save_img, get_img, exists, list_files
 from argparse import ArgumentParser
 from collections import defaultdict
-import time
-import json
-import subprocess
+#import time
+#import json
+#import subprocess
 import numpy as np
 
-BATCH_SIZE = 4
+BATCH_SIZE = 4             #nombre de samples qui vont traverser le neural network en même temps
 DEVICE = '/gpu:0'
 
-
-###TRANSFORM_VIDEO
+###Transform video
 
 #def from_pipe(opts):
 #    command = ["ffprobe",
@@ -129,37 +128,39 @@ DEVICE = '/gpu:0'
 
 
 # get img_shape
-def ffwd(data_in, paths_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):
-    assert len(paths_out) > 0
-    is_paths = type(data_in[0]) == str             #assert = "if not ... , ASSERTIONERROR "
+def ffwd(data_in, paths_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):    # data_in = liste de fichiers (idem paths_out) 
+    assert len(paths_out) > 0                                                  #assert = "if not ... , ASSERTIONERROR "
+    is_paths = type(data_in[0]) == str
     if is_paths:
-        assert len(data_in) == len(paths_out)
+        assert len(data_in) == len(paths_out)       # même nombre de fichiers dans les 2 listes
         img_shape = get_img(data_in[0]).shape
     else:
         assert data_in.size[0] == len(paths_out)
         img_shape = data_in[0].shape
+#        img_shape = X[0].shape
 
     g = tf.Graph()
     batch_size = min(len(paths_out), batch_size)
 #    curr_num = 0
-    soft_config = tf.ConfigProto(allow_soft_placement=True)   # ? ? ?
-    soft_config.gpu_options.allow_growth = True               # Autorise Tensorflow à "débrider" l'espace mémoire du GPU qui lui est dédié
+    soft_config = tf.ConfigProto(allow_soft_placement=True) # ? ? ?
+    soft_config.gpu_options.allow_growth = True            # Autorise Tensorflow à "débrider" l'espace mémoire du GPU qui lui est dédié
     with g.as_default(), g.device(device_t), \
             tf.Session(config=soft_config) as sess:
-        batch_shape = (batch_size,) + img_shape
+        batch_shape = (batch_size,) + img_shape            # 4 dimensions
         img_placeholder = tf.placeholder(tf.float32, shape=batch_shape,
                                          name='img_placeholder')
 
-        preds = fst_transform.net(img_placeholder)
+        preds = transform.net(img_placeholder)             # fait traverser le neural network au placeholder ? ? ?
         saver = tf.train.Saver()
-        if os.path.isdir(checkpoint_dir):
-            ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        
+        if os.path.isdir(checkpoint_dir):                        # <=> si le dossier existe
+            ckpt = tf.train.get_checkpoint_state(checkpoint_dir)         # = checkpoint_state si le checkpoint_state est valable ; = None sinon
             if ckpt and ckpt.model_checkpoint_path:
                 saver.restore(sess, ckpt.model_checkpoint_path)
             else:
                 raise Exception("No checkpoint found...")
         else:
-            saver.restore(sess, checkpoint_dir)                     #réinitialisation des variables à leur valeur de la ligne "saver = tf.train.Saver()"
+            saver.restore(sess, checkpoint_dir)  #réinitialisation des variables à leur valeur de la ligne "saver = tf.train.Saver()"
 
         num_iters = int(len(paths_out)/batch_size)
         for i in range(num_iters):
@@ -236,7 +237,7 @@ def build_parser():
 
     return parser
 
-def check_opts(opts):                                         #Vérification présence & type des variables
+def check_opts(opts):                                                          #Vérification présence & type des variables
     exists(opts.checkpoint_dir, 'Checkpoint not found!')
     exists(opts.in_path, 'In path not found!')
     if os.path.isdir(opts.out_path):
@@ -247,21 +248,24 @@ def main():
     parser = build_parser()
     opts = parser.parse_args()
     check_opts(opts)
-
-    if not os.path.isdir(opts.in_path):                                        #os.path.isdir = True si le in_path correspond à un dossier existant
-                                                                                    # => Si le dossier in_path n'existe pas, ...
-        if os.path.exists(opts.out_path) and os.path.isdir(opts.out_path):
+    
+    #Cas où le dossier in_path n'existe pas :
+    if not os.path.isdir(opts.in_path):                                        # os.path.isdir = True si le in_path correspond à un dossier existant
+                                                                                       # => Si le dossier in_path n'existe pas, ...
+        if os.path.exists(opts.out_path) and os.path.isdir(opts.out_path):     # os.path.exists = True si le fichier existe et est disponible
             out_path = \
                     os.path.join(opts.out_path,os.path.basename(opts.in_path))
         else:
             out_path = opts.out_path
 
-        ffwd_to_img(opts.in_path, out_path, opts.checkpoint_dir,
-                    device=opts.device)
+        ffwd_to_img(opts.in_path, out_path, opts.checkpoint_dir, device=opts.device)
+        
+    #Cas où le dossier in_path existe :
     else:
-        files = list_files(opts.in_path)
-        full_in = [os.path.join(opts.in_path,x) for x in files]
-        full_out = [os.path.join(opts.out_path,x) for x in files]
+        files = list_files(opts.in_path)                                       # liste des éléments de in_path
+        full_in = [os.path.join(opts.in_path,x) for x in files]                # liste contenant les str : in_path / nom du fichier (pour fichier dans files) 
+        full_out = [os.path.join(opts.out_path,x) for x in files]                    # => ~ place les fichiers dans le dossier in_path     (idem out_path) 
+        #Cas où on a saisi --allow-different-dimensions :
         if opts.allow_different_dimensions:
             ffwd_different_dimensions(full_in, full_out, opts.checkpoint_dir, 
                     device_t=opts.device, batch_size=opts.batch_size)

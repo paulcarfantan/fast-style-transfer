@@ -87,7 +87,7 @@ def build_parser():
 
     return parser
 
-def check_opts(opts):                                          #Vérification des inputs (existence & type)
+def check_opts(opts):                                           #Vérification des input (type & existence)
     exists(opts.checkpoint_dir, "checkpoint dir not found!")
     exists(opts.style, "style path not found!")
     exists(opts.train_path, "train path not found!")
@@ -143,9 +143,8 @@ def main():
         options.tv_weight,
         options.vgg_path
     ]
-    
-    
-    for preds, losses, i, epoch in optimize(*args,**kwargs):     #met côte à côte les éléments de la liste args et du dico kwargs (dico => "slow=options.slow", etc)
+
+    for preds, losses, i, epoch in optimize(*args, **kwargs):         #met côte à côte les éléments de la liste args et du dico kwargs (dico => "slow=options.slow", etc)
         style_loss, content_loss, tv_loss, loss = losses
 
         print('Epoch %d, Iteration: %d, Loss: %s' % (epoch, i, loss))
@@ -170,3 +169,32 @@ def main():
     
 if __name__ == '__main__':
     main()
+
+
+
+
+
+"""
+ATTENTION : si on applique un style que l'on a entraîné sur des images ex. 256x256, à une image 512x512, => répétition motifs !!!!! 
+
+Article : Perceptual Losses for Real-Time Style Transfer and Super-Resolution : utilise - feature reconstruction loss layer = relu3_3
+                                                                                        - style reconstruction loss layers  = relu1_2, relu2_2, relu 3_3, relu4_3                                                                                     
+Styles à tester : sketch - simpsons      
+
+
+2 content layers ? ( add relu5_2 )
+
+GAN
+Photorealism
+Change network ( vgg19 --> ? )
+
+
+neural_style : on optimise une image de départ random en la faisant passer dans le neural_network (minimisation 3 losses : content, style, total variation) 
+fast-style :    1) on optimise style layer (train neural_network)                                 (minimisation 3 losses : content, style, total variation) 
+                2) on fait passer image content dans le neural_network
+perceptual losses : 1) on fait passer l'image content dans image transformation network           (minimisation 4 losses : feature reconstruction, style reconstruction, total variation, pixel)  
+                    2) on fait passer l'image obtenue dans un loss network (pretrained) pour obtenir les losses
+                    
+                    
+
+"""

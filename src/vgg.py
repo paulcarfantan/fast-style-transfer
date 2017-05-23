@@ -7,7 +7,7 @@ import scipy.io
 
 MEAN_PIXEL = np.array([ 123.68 ,  116.779,  103.939])
 
-def net(data_path, input_image):          #idem neural_style vgg.net_preloaded
+def net(data_path, input_image):                             # idem neural_style vgg.net_preloaded
     layers = (
         'conv1_1', 'relu1_1', 'conv1_2', 'relu1_2', 'pool1',
 
@@ -23,7 +23,7 @@ def net(data_path, input_image):          #idem neural_style vgg.net_preloaded
         'relu5_3', 'conv5_4', 'relu5_4'
     )
     data = scipy.io.loadmat(data_path)
-#    mean = data['normalization'][0][0][0]
+    mean = data['normalization'][0][0][0]
 #    mean_pixel = np.mean(mean, axis=(0, 1))
     weights = data['layers'][0]
 
@@ -41,7 +41,7 @@ def net(data_path, input_image):          #idem neural_style vgg.net_preloaded
         elif kind == 'relu':
             current = tf.nn.relu(current)
         elif kind == 'pool':
-            current = _pool_layer(current)     #Pas de choix de pooling  (!= neural_style )
+            current = _pool_layer(current)      # pas de choix du pooling (!= neural_style)
         net[name] = current
 
     assert len(net) == len(layers)
