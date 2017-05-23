@@ -15,7 +15,7 @@ DEVICES = 'CUDA_VISIBLE_DEVICES'
 def optimize(content_targets, style_target, content_weight, style_weight,
              tv_weight, vgg_path, epochs=2, print_iterations=1000,
              batch_size=4, save_path='saver/fns.ckpt', slow=False,
-             learning_rate=1e-3, debug=False):
+             learning_rate=1e-3, debug=False):                         #Batch size = nombre de samples que l'on fait traverser A LA FOIS le neural network
     if slow:
         batch_size = 1
     
@@ -25,16 +25,16 @@ def optimize(content_targets, style_target, content_weight, style_weight,
     
     mod = len(content_targets) % batch_size
     print("mod", mod)
-    if mod > 0:                                                 #On veut un nb d'éléments multiple de 4
+    if mod > 0:                         #On veut un nb d'éléments multiple de batch size => les derniers samples à traverser ne seront pas dans un cas != des autres
         print("Train set has been trimmed slightly..")
-        content_targets = content_targets[:-mod]
+        content_targets = content_targets[:-mod]            #On supprime les samples en trop
         print("content_targets",content_targets)
         print("\n")
-        
+
     style_features = {}
 
-    batch_shape = (batch_size,256,256,3)
-    style_shape = (1,) + style_target.shape
+    batch_shape = (batch_size,256,256,3)           #4 dimensions
+    style_shape = (1,) + style_target.shape        #4 dimensions
     print("style_shape",style_shape)
 
     # precompute style features
@@ -46,10 +46,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
         print("net",net,"\n")
         style_pre = np.array([style_target])
         print("style_pre",style_pre,"\n")
-        if style_pre.all == style_target.all:
-            print("\n EGAUX \n")
-        else:
-            print("\n \n Dommage \n \n")
+
         for layer in STYLE_LAYERS:
             features = net[layer].eval(feed_dict={style_image:style_pre})
             features = np.reshape(features, (-1, features.shape[3]))
