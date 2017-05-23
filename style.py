@@ -4,8 +4,8 @@ sys.path.insert(0, 'src')
 import numpy as np, scipy.misc 
 from fst_optimize import optimize
 from argparse import ArgumentParser
-from fst_utils import save_img, get_img, exists, list_files
-import fst_evaluate
+from utils import save_img, get_img, exists, list_files
+import evaluate
 
 CONTENT_WEIGHT = 7.5e0
 STYLE_WEIGHT = 1e2

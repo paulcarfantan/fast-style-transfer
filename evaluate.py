@@ -1,8 +1,8 @@
 from __future__ import print_function
 import sys
 sys.path.insert(0, 'src')
-import fst_transform
-import fst_vgg
+import transform
+import vgg
 import pdb
 import os
 import scipy.misc
