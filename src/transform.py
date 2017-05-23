@@ -24,7 +24,6 @@ def _conv_layer(net, num_filters, filter_size, strides, relu=True):
     net = _instance_norm(net)
     if relu:
         net = tf.nn.relu(net)
-
     return net
 
 def _conv_tranpose_layer(net, num_filters, filter_size, strides):
